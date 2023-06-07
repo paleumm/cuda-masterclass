@@ -16,6 +16,14 @@ __global__ void unique_gid_calc(int* input) {
 	printf("blockIdx.x: %d, threadIdx: %d, gid: %d, value: %d\n", blockIdx.x, tid, gid, input[gid]);
 }
 
+__global__ void unique_gid_calc_2d(int* input) {
+	int tid = threadIdx.x;
+	int block_offset = blockIdx.x * blockDim.x;
+	int row_offset = gridDim.x * blockIdx.y * blockDim.x;
+	int gid = tid + block_offset + row_offset;
+	printf("gridDim.x: %d, blockIdx.x: %d, blockIdx.y: %d,,threadIdx: %d, gid: %d, value: %d\n", gridDim.x, blockIdx.x, blockIdx.y, tid, gid, input[gid]);
+}
+
 int main() {
 	int arr_sz = 16;
 	int arr_byte_sz = sizeof(int) * arr_sz;
@@ -31,13 +39,16 @@ int main() {
 	cudaMemcpy(d_data, h_data, arr_byte_sz, cudaMemcpyHostToDevice);
 
 	dim3 block(4);
-	dim3 grid(4);
+	dim3 grid(2, 2);
 
-	unique_idx_calc_thrdIdx << <grid, block >> > (d_data);
-	cudaDeviceSynchronize();
+	//unique_idx_calc_thrdIdx << <grid, block >> > (d_data);
+	//cudaDeviceSynchronize();
 
-	unique_gid_calc << <grid, block >> > (d_data);
-	cudaDeviceSynchronize();
+	//unique_gid_calc << <grid, block >> > (d_data);
+	//cudaDeviceSynchronize(); 
+
+	unique_gid_calc_2d << <grid, block >> > (d_data);
+	cudaDeviceSynchronize(); 
 
 	cudaDeviceReset();
 	return 0;
