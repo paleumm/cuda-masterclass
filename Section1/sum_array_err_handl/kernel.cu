@@ -28,7 +28,7 @@ int main() {
 	int size = 1 << 25;
 	int byte_size = size * sizeof(int);
 
-	int block_size = 1024;
+	int block_size = 512;
 
 	cudaError err;
 
