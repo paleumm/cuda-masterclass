@@ -1,12 +1,9 @@
-﻿
-#include "cuda_runtime.h"
+﻿#include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 
 #include <stdio.h>
-
 #include <stdlib.h>
 #include <time.h>
-
 #include <cstring>
 
 #include "cuda_common.cuh"
@@ -52,7 +49,11 @@ int main() {
 		h_b[i] = (int)(rand() & 0xff);
 	}
 
+	// sum using cpu
+	clock_t cpu_start, cpu_end;
+	cpu_start = clock();
 	sum_array_cpu(h_a, h_b, h_c, size);
+	cpu_end = clock();
 
 	memset(results, 0, byte_size);
 
@@ -62,19 +63,43 @@ int main() {
 	gpuAssert(cudaMalloc((int**)&d_b, byte_size));
 	gpuAssert(cudaMalloc((int**)&d_c, byte_size));
 	
-	cudaMemcpy(d_a, h_a, byte_size, cudaMemcpyHostToDevice);
-	cudaMemcpy(d_b, h_b, byte_size, cudaMemcpyHostToDevice);
-
 	dim3 block(block_size);
 	dim3 grid((size / block.x) + 1);
 
+	clock_t htod_start, htod_end;
+	htod_start = clock();
+	cudaMemcpy(d_a, h_a, byte_size, cudaMemcpyHostToDevice);
+	cudaMemcpy(d_b, h_b, byte_size, cudaMemcpyHostToDevice);
+	htod_end = clock();
+
+	clock_t gpu_start, gpu_end;
+	gpu_start = clock();
 	sum_array << <grid, block >> > (d_a, d_b, d_c, size);
 	cudaDeviceSynchronize();
+	gpu_end = clock();
 
+	clock_t dtoh_start, dtoh_end;
+	dtoh_start = clock();
 	cudaMemcpy(results, d_c, byte_size, cudaMemcpyDeviceToHost);
+	dtoh_end = clock();
 
 	// array comparison
 	compare_arrays(h_c, results, size);
+
+	printf("Sum array on CPU execution time : %4.6f\n", 
+		(double)((double)(cpu_end - cpu_start) / CLOCKS_PER_SEC));
+
+	printf("Sum array on GPU execution time : %4.6f\n",
+		(double)((double)(gpu_end - gpu_start) / CLOCKS_PER_SEC));
+
+	printf("htod mem transfer time : %4.6f\n",
+		(double)((double)(htod_end - htod_start) / CLOCKS_PER_SEC));
+
+	printf("dtoh mem transfer time : %4.6f\n",
+		(double)((double)(dtoh_end - dtoh_start) / CLOCKS_PER_SEC));
+
+	printf("Total GPU execution time : %4.6f\n",
+		(double)((double)(dtoh_end - htod_start) / CLOCKS_PER_SEC));
 
 	/*for (int i = 0; i < size; i++) {
 		if (i % 128 == 0) printf("\n\n");
