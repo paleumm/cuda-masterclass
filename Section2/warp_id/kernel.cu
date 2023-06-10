@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+
+
 __global__ void print_warp_details() {
 	int gid = blockIdx.y * gridDim.x * blockIdx.x + blockDim.x * blockIdx.x + threadIdx.x;
 	
