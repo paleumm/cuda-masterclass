@@ -8,7 +8,7 @@
 
 
 __global__ void print_warp_details() {
-	int gid = blockIdx.y * gridDim.x * blockIdx.x + blockDim.x * blockIdx.x + threadIdx.x;
+	int gid = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
 	
 	int warp_id = threadIdx.x / 32;
 
